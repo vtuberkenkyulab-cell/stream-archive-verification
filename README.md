@@ -4,7 +4,7 @@ VTuber・配信者について検索で見かける話題を、元配信・本�
 
 ## 公開URL
 
-GitHub Pages公開後にここへ記載します。
+[https://vtuberkenkyulab-cell.github.io/stream-archive-verification/](https://vtuberkenkyulab-cell.github.io/stream-archive-verification/)
 
 ## サイトの構造
 
