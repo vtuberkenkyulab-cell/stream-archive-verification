@@ -1,0 +1,7 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { sitePath } from '../lib/site';
+---
+<BaseLayout title="ページが見つかりません" description="指定されたページは見つかりませんでした。" noindex={true}>
+  <article class="content-page"><p class="eyebrow">404</p><h1>ページが見つかりません</h1><p>URLが変更されたか、入力が間違っている可能性があります。</p><p><a href={sitePath('/')}>TOPへ戻る</a> ／ <a href={sitePath('/articles/')}>記事一覧を見る</a></p></article>
+</BaseLayout>

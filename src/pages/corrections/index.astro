@@ -1,0 +1,10 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate, sitePath } from '../../lib/site';
+const articles = await getCollection('articles', ({ data }) => !data.draft && data.corrections.length > 0);
+const corrections = articles.flatMap((article) => article.data.corrections.map((item) => ({ article, item }))).sort((a,b) => b.item.date.valueOf() - a.item.date.valueOf());
+---
+<BaseLayout title="訂正・更新履歴" description="公開記事の主要な訂正・更新履歴です。">
+  <article class="content-page"><p class="eyebrow">CORRECTIONS</p><h1>訂正・更新履歴</h1><p>記事ごとの主要な訂正を、訂正日・変更箇所・変更理由とともに掲載します。</p>{corrections.length ? <ul>{corrections.map(({article,item}) => <li><strong>{formatDate(item.date)}</strong> <a href={sitePath(`/articles/${article.data.slug}/`)}>{article.data.title}</a>：{item.location}（{item.reason}）</li>)}</ul> : <div class="notice">現在、公開後の訂正履歴はありません。</div>}</article>
+</BaseLayout>

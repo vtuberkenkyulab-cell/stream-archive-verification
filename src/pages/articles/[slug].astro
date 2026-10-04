@@ -1,0 +1,78 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { formatDate, SITE_NAME, sitePath } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles', ({ data }) => !data.draft);
+  return articles.map((article) => ({ params: { slug: article.data.slug }, props: { article, allArticles: articles } }));
+}
+
+interface Props { article: CollectionEntry<'articles'>; allArticles: CollectionEntry<'articles'>[]; }
+const { article, allArticles } = Astro.props;
+const { Content, headings } = await render(article);
+const canonical = new URL(sitePath(`/articles/${article.data.slug}/`), Astro.site);
+const related = allArticles.filter((item) => item.data.slug !== article.data.slug && item.data.personSlug === article.data.personSlug).slice(0,3);
+const fallbackRelated = related.length ? related : allArticles.filter((item) => item.data.slug !== article.data.slug).sort((a,b) => a.data.displayOrder - b.data.displayOrder).slice(0,3);
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: article.data.title,
+  description: article.data.description,
+  datePublished: article.data.publishedAt.toISOString(),
+  dateModified: article.data.updatedAt.toISOString(),
+  author: { '@type': 'Organization', name: SITE_NAME },
+  publisher: { '@type': 'Organization', name: SITE_NAME },
+  mainEntityOfPage: canonical.href,
+  about: article.data.person,
+  inLanguage: 'ja'
+};
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'TOP', item: new URL(sitePath('/'), Astro.site).href },
+    { '@type': 'ListItem', position: 2, name: '記事一覧', item: new URL(sitePath('/articles/'), Astro.site).href },
+    { '@type': 'ListItem', position: 3, name: article.data.title, item: canonical.href }
+  ]
+};
+---
+<BaseLayout title={article.data.title} description={article.data.description} canonical={canonical} type="article" jsonLd={[articleSchema, breadcrumbSchema]}>
+  <div class="container article-shell">
+    <article>
+      <nav class="meta" aria-label="パンくず"><a href={sitePath('/')}>TOP</a><span>›</span><a href={sitePath('/articles/')}>記事一覧</a></nav>
+      <header class="article-header">
+        <span class="tag"><a href={sitePath(`/people/${article.data.personSlug}/`)}>{article.data.person}</a></span>
+        <h1>{article.data.title}</h1>
+        <div class="meta article-meta">
+          <span>公開日 {formatDate(article.data.publishedAt)}</span>
+          <span>最終更新日 {formatDate(article.data.updatedAt)}</span>
+          <span>最終確認日 {formatDate(article.data.checkedAt)}</span>
+        </div>
+      </header>
+      <section class="key-points" aria-labelledby="key-points-title">
+        <h2 id="key-points-title">この記事の要点</h2>
+        <ul>{article.data.keyPoints.map((point) => <li>{point}</li>)}</ul>
+      </section>
+      <div class="prose"><Content /></div>
+      <section class="sources" aria-labelledby="sources-title">
+        <h2 id="sources-title">確認した主な資料</h2>
+        {article.data.sources.length ? <ol>{article.data.sources.map((source) => <li><a href={source.url} rel="noopener noreferrer">{source.title}</a></li>)}</ol> : <p>本文中に確認先が記載されています。</p>}
+      </section>
+      <section class="sources" aria-labelledby="corrections-title">
+        <h2 id="corrections-title">訂正履歴</h2>
+        {article.data.corrections.length ? <ul>{article.data.corrections.map((item) => <li>{formatDate(item.date)}：{item.location}（{item.reason}）</li>)}</ul> : <p>公開後の訂正はありません。</p>}
+      </section>
+      <p class="notice">記事の確認方法については<a href={sitePath('/methodology/')}>調査方法</a>と<a href={sitePath('/sources/')}>情報源の考え方</a>をご覧ください。誤りや追加資料は<a href={sitePath('/contact/')}>訂正依頼・問い合わせ</a>からお知らせください。</p>
+    </article>
+    <aside class="article-side">
+      <strong>この記事の見出し</strong>
+      <nav>{headings.filter((h) => h.depth === 2).map((heading) => <a href={`#${heading.slug}`}>{heading.text}</a>)}</nav>
+    </aside>
+  </div>
+  <section class="section container">
+    <div class="section-head"><h2>関連記事</h2><a href={sitePath(`/people/${article.data.personSlug}/`)}>{article.data.person}の記事一覧</a></div>
+    <div class="card-grid">{fallbackRelated.map((item) => <ArticleCard article={item} />)}</div>
+  </section>
+</BaseLayout>

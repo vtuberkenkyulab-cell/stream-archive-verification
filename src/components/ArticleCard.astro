@@ -1,0 +1,14 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate, sitePath } from '../lib/site';
+interface Props { article: CollectionEntry<'articles'>; }
+const { article } = Astro.props;
+---
+<article class="card">
+  <span class="tag">{article.data.person}</span>
+  <h3><a href={sitePath(`/articles/${article.data.slug}/`)}>{article.data.title}</a></h3>
+  <p>{article.data.description}</p>
+  <div class="meta" style="margin-top:auto;padding-top:1rem">
+    <span>最終確認 {formatDate(article.data.checkedAt)}</span>
+  </div>
+</article>

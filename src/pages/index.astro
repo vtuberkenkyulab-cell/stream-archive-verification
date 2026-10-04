@@ -1,0 +1,56 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { SITE_DESCRIPTION, SITE_NAME, sitePath } from '../lib/site';
+
+const articles = (await getCollection('articles', ({ data }) => !data.draft)).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const featured = articles.filter((article) => article.data.featured).slice(0, 5);
+const recent = [...articles].sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf()).slice(0, 6);
+const people = await getCollection('people');
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE_NAME,
+  description: SITE_DESCRIPTION,
+  url: new URL(sitePath('/'), Astro.site).href,
+  inLanguage: 'ja'
+};
+---
+<BaseLayout jsonLd={jsonLd}>
+  <section class="hero">
+    <div class="container">
+      <p class="eyebrow">非公式・公開資料ベース</p>
+      <h1>検索で見かける話題を、元の情報まで遡って確認する。</h1>
+      <p class="lead">VTuber・配信者に関する話題を、元配信、本人SNS、公式発表、当事者発言などの公開資料と照らし合わせて整理しています。</p>
+    </div>
+  </section>
+
+  <section class="section container">
+    <div class="section-head"><h2>注目記事</h2><a href={sitePath('/articles/')}>全記事を見る</a></div>
+    <div class="card-grid">{featured.map((article) => <ArticleCard article={article} />)}</div>
+  </section>
+
+  <section class="section container">
+    <div class="section-head"><h2>最近の検証記事</h2><a href={sitePath('/articles/')}>公開日順で見る</a></div>
+    <div class="card-grid">{recent.map((article) => <ArticleCard article={article} />)}</div>
+  </section>
+
+  <section class="section container">
+    <div class="section-head"><h2>人物から探す</h2><a href={sitePath('/people/')}>人物一覧</a></div>
+    <div class="people-grid">
+      {people.sort((a,b) => a.data.name.localeCompare(b.data.name, 'ja')).slice(0, 8).map((person) => {
+        const count = articles.filter((article) => article.data.personSlug === person.data.slug).length;
+        return <div class="people-card"><h2><a href={sitePath(`/people/${person.data.slug}/`)}>{person.data.name}</a></h2><p>検証記事 {count}件</p></div>;
+      })}
+    </div>
+  </section>
+
+  <section class="section container">
+    <div class="notice">
+      <h2 style="margin-top:0">調査方法</h2>
+      <p>検索結果は論点を見つける手がかりとして扱い、事実の根拠にはしません。可能な限り元配信・本人発言・公式発表まで遡り、確認できたことと確認できなかったことを分けます。</p>
+      <a href={sitePath('/methodology/')}>調査方法を詳しく読む</a>
+    </div>
+  </section>
+</BaseLayout>

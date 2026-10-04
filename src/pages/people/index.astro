@@ -1,0 +1,16 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate, sitePath } from '../../lib/site';
+const [people, articles] = await Promise.all([getCollection('people'), getCollection('articles', ({ data }) => !data.draft)]);
+---
+<BaseLayout title="人物一覧" description="本サイトで検証記事を掲載しているVTuber・配信者の一覧です。人物プロフィールではなく、記事を探すためのハブです。">
+  <header class="page-header"><div class="container"><p class="eyebrow">PEOPLE</p><h1>人物から探す</h1><p>人物ページは公式プロフィールではなく、本サイト内の検証記事をまとめるためのページです。</p></div></header>
+  <section class="section container"><div class="people-grid">
+    {people.sort((a,b) => a.data.name.localeCompare(b.data.name, 'ja')).map((person) => {
+      const related = articles.filter((article) => article.data.personSlug === person.data.slug);
+      const latest = related.sort((a,b) => b.data.checkedAt.valueOf() - a.data.checkedAt.valueOf())[0];
+      return <div class="people-card"><h2><a href={sitePath(`/people/${person.data.slug}/`)}>{person.data.name}</a></h2><p>記事 {related.length}件{latest && ` ／ 最新確認 ${formatDate(latest.data.checkedAt)}`}</p></div>;
+    })}
+  </div></section>
+</BaseLayout>
