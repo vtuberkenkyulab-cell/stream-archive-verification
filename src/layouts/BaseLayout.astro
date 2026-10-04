@@ -14,13 +14,15 @@ interface Props {
 const {
   title = SITE_NAME,
   description = SITE_DESCRIPTION,
-  canonical = new URL(Astro.url.pathname, Astro.site),
+  canonical: _requestedCanonical = new URL(Astro.url.pathname, Astro.site),
   type = 'website',
   jsonLd,
-  noindex = false
+  noindex: _requestedNoindex = false
 } = Astro.props;
 const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
 const verification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
+const migratedPath = Astro.url.pathname.replace(/^\/stream-archive-verification(?=\/|$)/, '') || '/';
+const canonical = new URL(migratedPath, 'https://vtuberkenkyulab-cell.github.io');
 ---
 <!doctype html>
 <html lang="ja">
@@ -30,6 +32,8 @@ const verification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
     <meta name="generator" content={Astro.generator} />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    <meta name="robots" content="noindex,follow" />
+    <meta http-equiv="refresh" content={`0;url=${canonical.href}`} />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} RSS`} href={new URL(sitePath('/rss.xml'), Astro.site)} />
     <link rel="sitemap" href={new URL(sitePath('/sitemap-index.xml'), Astro.site)} />
@@ -43,11 +47,11 @@ const verification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     {verification && <meta name="google-site-verification" content={verification} />}
-    {noindex && <meta name="robots" content="noindex,follow" />}
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
     <link rel="icon" href={sitePath('/favicon.svg')} type="image/svg+xml" />
   </head>
   <body>
+    <p class="migration-notice">サイトを移転しました。<a href={canonical}>新しいページへ移動する</a></p>
     <a class="skip-link" href="#main">本文へ移動</a>
     <header class="site-header">
       <div class="container header-inner">
